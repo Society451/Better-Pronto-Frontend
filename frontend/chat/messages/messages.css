@@ -13,6 +13,7 @@
     border-radius: 5px;
     font-size: 12px; /* modify this later with a js function to modify in settings*/
     color: #333; /* Default text color for readability */
+    position: relative; /* Needed for absolute positioning of delete button */
 }
 
 .message.received {
@@ -51,4 +52,37 @@
     font-size: 12px; /* Smaller font size for the timestamp */
     color: #888; /* Subtle color for the timestamp */
     margin-left: 5px; /* Set to exactly 5px spacing between sender and timestamp */
+}
+
+/* Delete button styling */
+.message-delete-btn {
+    position: absolute;
+    right: 5px;
+    top: 5px;
+    background: transparent;
+    border: none;
+    color: #aaa; /* Default grey color */
+    cursor: pointer;
+    opacity: 0; /* Hidden by default */
+    transition: opacity 0.2s, color 0.2s;
+    padding: 3px;
+    font-size: 14px;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.message:hover .message-delete-btn {
+    opacity: 1; /* Show on hover */
+}
+
+.message-delete-btn:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.message-delete-btn.delete-active {
+    color: #ff3b30; /* Red when shift is pressed */
 }
