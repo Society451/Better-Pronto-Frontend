@@ -6,14 +6,16 @@ const messageData = {
             sender: "John Doe",
             text: "Hello! How are you?",
             timestamp: "10:00 AM",
-            isSent: false
+            isSent: false,
+            profilePic: null // Removed external image URL
         },
         {
             id: 2,
             sender: "You",
             text: "I'm good, thanks! How about you?",
             timestamp: "10:01 AM",
-            isSent: true
+            isSent: true,
+            profilePic: null // Removed external image URL
         }
     ],
     2: [ // Chat ID 2 (Jane Smith)
@@ -22,14 +24,16 @@ const messageData = {
             sender: "Jane Smith",
             text: "Did you finish that project?",
             timestamp: "09:45 AM",
-            isSent: false
+            isSent: false,
+            profilePic: null // Removed external image URL
         },
         {
             id: 4,
             sender: "You",
             text: "Almost done, will send it by tomorrow!",
             timestamp: "09:47 AM",
-            isSent: true
+            isSent: true,
+            profilePic: null // Removed external image URL
         }
     ]
 };
@@ -60,10 +64,19 @@ function loadMessages(chatId) {
 
 // Function to create a message element
 function createMessageElement(message) {
-    // Create message element
+    // Create message container with profile picture and content
+    const messageContainer = document.createElement('div');
+    messageContainer.className = `message-container ${message.isSent ? 'sent' : 'received'}`;
+    messageContainer.dataset.messageId = message.id;
+    
+    // Create profile picture element - now as a blank circle
+    const profilePic = document.createElement('div');
+    profilePic.className = 'profile-picture';
+    // No longer using image element, just using the div with CSS styling
+    
+    // Create message content container
     const messageElement = document.createElement('div');
-    messageElement.className = `message ${message.isSent ? 'sent' : 'received'}`;
-    messageElement.dataset.messageId = message.id;
+    messageElement.className = 'message-content';
     
     // Create message header
     const messageHeader = document.createElement('div');
@@ -93,12 +106,16 @@ function createMessageElement(message) {
     deleteButton.innerHTML = '<i class="fas fa-trash"></i>';
     deleteButton.title = 'Delete message';
     
-    // Add header, text, and delete button to message
+    // Add header, text, and delete button to message content
     messageElement.appendChild(messageHeader);
     messageElement.appendChild(messageParagraph);
     messageElement.appendChild(deleteButton);
     
-    return messageElement;
+    // Add profile picture and message content to the container
+    messageContainer.appendChild(profilePic);
+    messageContainer.appendChild(messageElement);
+    
+    return messageContainer;
 }
 
 // Function to delete a message
@@ -115,7 +132,7 @@ function deleteMessage(messageId, chatId) {
     chatMessages.splice(messageIndex, 1);
     
     // Remove the message element from DOM
-    const messageElement = document.querySelector(`.message[data-message-id="${messageId}"]`);
+    const messageElement = document.querySelector(`.message-container[data-message-id="${messageId}"]`);
     if (messageElement) {
         messageElement.classList.add('deleting');
         // Add fade-out animation
@@ -167,9 +184,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Event delegation for delete buttons
     document.addEventListener('click', function(e) {
         if (e.target.closest('.message-delete-btn')) {
-            const messageElement = e.target.closest('.message');
-            if (messageElement) {
-                const messageId = parseInt(messageElement.dataset.messageId);
+            const messageContainer = e.target.closest('.message-container');
+            if (messageContainer) {
+                const messageId = parseInt(messageContainer.dataset.messageId);
                 const currentChatId = document.querySelector('.chat-item.selected')?.dataset.id;
                 
                 if (currentChatId) {
@@ -191,7 +208,8 @@ document.addEventListener('DOMContentLoaded', function() {
             sender: sender,
             text: text,
             timestamp: getCurrentTime(),
-            isSent: isSent
+            isSent: isSent,
+            profilePic: null // Use null instead of external URLs
         };
         
         // Add to data store

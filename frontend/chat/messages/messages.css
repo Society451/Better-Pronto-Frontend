@@ -6,24 +6,49 @@
     background-color: #f9f9f9;
 }
 
-.message {
-    margin-bottom: 10px;
+/* Message container styling with profile picture */
+.message-container {
+    display: flex;
+    margin-bottom: 15px;
     max-width: 100%;
-    padding: 5px;
-    border-radius: 5px;
-    font-size: 12px; /* modify this later with a js function to modify in settings*/
-    color: #333; /* Default text color for readability */
-    position: relative; /* Needed for absolute positioning of delete button */
 }
 
-.message.received {
-    color: #333;
-    align-self: flex-start;
+.message-container.sent {
+    flex-direction: row-reverse;
+    justify-content: flex-start;
 }
 
-.message.sent {
-    color: #333; 
-    align-self: flex-end;
+/* Profile picture styles */
+.message-container .profile-picture {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: #ddd; /* Blank gray circle */
+    margin: 0 10px;
+    flex-shrink: 0; /* Prevent the profile picture from shrinking */
+    align-self: flex-start; /* Align to the top of the message */
+}
+
+/* Message content styles */
+.message-content {
+    background-color: #f2f2f2;
+    border-radius: 8px;
+    padding: 8px 12px;
+    position: relative;
+    max-width: 70%;
+}
+
+.message-container.sent .message-content {
+    background-color: #e1f5fe; /* Light blue background for sent messages */
+}
+
+.message-container.received .message-content {
+    background-color: #f2f2f2; /* Light gray background for received messages */
+}
+
+.message-content p {
+    margin: 5px 0;
+    word-break: break-word;
 }
 
 /* Styles for the message header */
@@ -38,14 +63,6 @@
     font-weight: bold; /* Make the sender's name bold */
     font-size: 14px; /* Slightly larger font size for emphasis */
     color: #000; /* Black color for all sender names */
-}
-
-.message.sent .sender {
-    color: #000; /* Black color replacing blue */
-}
-
-.message.received .sender {
-    color: #000; /* Black color replacing green */
 }
 
 .timestamp {
@@ -75,7 +92,7 @@
     justify-content: center;
 }
 
-.message:hover .message-delete-btn {
+.message-content:hover .message-delete-btn {
     opacity: 1; /* Show on hover */
 }
 
@@ -85,4 +102,28 @@
 
 .message-delete-btn.delete-active {
     color: #ff3b30; /* Red when shift is pressed */
+}
+
+/* Ensure sent messages have the profile picture on the right side */
+.message-container.sent .profile-picture {
+    margin-left: 10px;
+    margin-right: 0;
+}
+
+.message-container.received .profile-picture {
+    margin-right: 10px;
+    margin-left: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .message-content {
+        max-width: 80%;
+    }
+    
+    .message-container .profile-picture {
+        width: 30px;
+        height: 30px;
+        margin: 0 5px;
+    }
 }
