@@ -1,5 +1,5 @@
 // Function to update the chat header with current chat information
-function updateChatHeader(chatName) {
+function updateChatHeader(chatName, isOnline = true) {
     const chatHeaderContainer = document.getElementById('chat-header-container');
     if (!chatHeaderContainer) return;
 
@@ -7,7 +7,9 @@ function updateChatHeader(chatName) {
     const headerContent = `
         <div class="chat-header">
             <div class="contact-info">
-                <div class="profile-picture"></div>
+                <div class="profile-picture">
+                    <div class="status-indicator ${isOnline ? 'status-online' : 'status-offline'}"></div>
+                </div>
                 <h3 id="chat-heading">Chat with ${chatName || 'Select a chat'}</h3>
             </div>
             <div class="dropdown">
@@ -101,12 +103,12 @@ function handleHeaderAction(action) {
 // Initialize the header
 document.addEventListener('DOMContentLoaded', function() {
     // Default header with empty chat name (will be updated when chat is selected)
-    updateChatHeader('John Doe'); // Default to first chat
+    updateChatHeader('John Doe', true); // Default to first chat, online by default
     
     // Listen for chat selection events
     document.addEventListener('chatSelected', function(e) {
-        if (e.detail && e.detail.chatName) {
-            updateChatHeader(e.detail.chatName);
+        if (e.detail) {
+            updateChatHeader(e.detail.chatName, e.detail.isOnline);
         }
     });
     
@@ -124,5 +126,5 @@ document.addEventListener('DOMContentLoaded', function() {
 if (document.readyState === "complete" || 
     document.readyState === "loaded" || 
     document.readyState === "interactive") {
-    updateChatHeader('John Doe');
+    updateChatHeader('John Doe', true);
 }

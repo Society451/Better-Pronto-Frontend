@@ -58,7 +58,7 @@
     background-color: #e0e0e0;
 }
 
-/* Profile picture styles */
+/* Profile picture styles with status indicator */
 .profile-picture {
     width: 40px;
     height: 40px;
@@ -66,6 +66,27 @@
     background-color: #bbb;
     margin-right: 10px;
     flex-shrink: 0;
+    position: relative; /* Required for absolute positioning of status indicator */
+}
+
+/* Status indicator */
+.status-indicator {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid #f4f4f4; /* Match parent background for a border effect */
+}
+
+.status-online {
+    background-color: #4CAF50; /* Green for online */
+}
+
+.status-offline {
+    background-color: #ccc; /* Grey for offline */
+    opacity: 0.7;
 }
 
 /* Chat content styles */

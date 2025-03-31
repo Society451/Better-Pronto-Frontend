@@ -5,14 +5,16 @@ const chatData = [
         name: "John Doe",
         profilePicture: null, // Will use default
         isPinned: false,
-        isMuted: false
+        isMuted: false,
+        isOnline: true // Online status
     },
     {
         id: 2,
         name: "Jane Smith",
         profilePicture: null, // Will use default
         isPinned: true,
-        isMuted: false
+        isMuted: false,
+        isOnline: false // Offline status
     }
 ];
 
@@ -33,10 +35,14 @@ function renderChatList() {
         chatItem.className = 'chat-item';
         chatItem.dataset.id = chat.id;
         
-        // Create profile picture
+        // Create profile picture with status indicator
         const profilePic = document.createElement('div');
         profilePic.className = 'profile-picture';
-        // If we had a profile picture URL, we could set it as background image here
+        
+        // Create and add status indicator
+        const statusIndicator = document.createElement('div');
+        statusIndicator.className = `status-indicator ${chat.isOnline ? 'status-online' : 'status-offline'}`;
+        profilePic.appendChild(statusIndicator);
         
         // Create chat content
         const chatContent = document.createElement('div');
@@ -188,11 +194,31 @@ function selectChat(chatId) {
     const chatSelectedEvent = new CustomEvent('chatSelected', { 
         detail: { 
             chatId: chatId,
-            chatName: selectedChat.name
+            chatName: selectedChat.name,
+            isOnline: selectedChat.isOnline
         },
         bubbles: true 
     });
     document.dispatchEvent(chatSelectedEvent);
+}
+
+// Simulate status changes periodically (for demo purposes)
+function simulateStatusChanges() {
+    setInterval(() => {
+        // Randomly toggle online status of one chat
+        const randomIndex = Math.floor(Math.random() * chatData.length);
+        chatData[randomIndex].isOnline = !chatData[randomIndex].isOnline;
+        
+        // Re-render the chat list
+        renderChatList();
+        
+        // Update header if the current selection matches the changed chat
+        const currentChatId = document.querySelector('.chat-item.selected')?.dataset.id;
+        if (currentChatId && parseInt(currentChatId) === chatData[randomIndex].id) {
+            // Dispatch event to update header
+            selectChat(parseInt(currentChatId));
+        }
+    }, 8000); // Every 8 seconds
 }
 
 // Close dropdown when clicking outside
@@ -211,6 +237,9 @@ document.addEventListener('DOMContentLoaded', function() {
     if (chatData.length > 0) {
         selectChat(chatData[0].id);
     }
+    
+    // Start simulating status changes
+    simulateStatusChanges();
 });
 
 // Initialize immediately if DOM is already loaded
@@ -224,4 +253,7 @@ if (document.readyState === "complete" ||
     if (chatData.length > 0) {
         selectChat(chatData[0].id);
     }
+    
+    // Start simulating status changes
+    simulateStatusChanges();
 }
