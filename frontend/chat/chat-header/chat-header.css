@@ -9,9 +9,25 @@
     border-bottom: None;
 }
 
+/* Contact info container */
+.contact-info {
+    display: flex;
+    align-items: center;
+}
+
+/* Profile picture in header */
+.profile-picture {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #bbb;
+    margin-right: 10px;
+}
+
 .chat-header h3 {
     margin: 0;
     font-size: 18px;
+    text-align: center; /* Center the text */
 }
 
 .settings-button {
@@ -23,4 +39,53 @@
 
 .settings-button:hover {
     color: #007bff;
+}
+
+/* Dropdown styles */
+.dropdown {
+    position: relative;
+}
+
+.dropdown-trigger {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    color: #777;
+}
+
+.dropdown-trigger:hover {
+    color: #333;
+}
+
+.dropdown-menu {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    display: none;
+    min-width: 150px;
+    z-index: 10;
+}
+
+.dropdown-menu.active {
+    display: block;
+}
+
+.dropdown-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 8px 12px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.dropdown-item:hover {
+    background-color: #f5f5f5;
 }
