@@ -203,9 +203,19 @@ function setupSearchToggle() {
         searchContainer.classList.toggle('active', isSearchVisible);
         toggleButton.classList.toggle('active', isSearchVisible);
         
-        // If showing search, focus the input
+        // If showing search, focus the input with a more reliable approach
         if (isSearchVisible) {
-            searchInput.focus();
+            // Use a slightly longer timeout to ensure the DOM has fully updated
+            // and any CSS transitions have completed
+            setTimeout(() => {
+                searchInput.focus();
+                // Try focusing again to ensure it works
+                setTimeout(() => {
+                    if (document.activeElement !== searchInput) {
+                        searchInput.focus();
+                    }
+                }, 50);
+            }, 50);
         } else {
             // If hiding search, clear it
             searchInput.value = '';
