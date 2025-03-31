@@ -64,6 +64,30 @@
             border-top: 1px solid #ddd;
             background-color: #ddd;
         }
+        
+        /* Adjust sidebar header to fit search bar */
+        .sidebar-header {
+            padding: 8px !important;
+            flex-wrap: wrap !important;
+            height: auto !important;
+            min-height: 50px;
+        }
+        
+        .sidebar-header h2 {
+            margin-right: 5px;
+            font-size: 1.2rem;
+        }
+        
+        /* Responsive adjustments for smaller screens */
+        @media (max-width: 768px) {
+            .chat-app {
+                grid-template-columns: 30% 70%;
+            }
+            
+            .search-container {
+                margin: 5px 0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -73,6 +97,12 @@
             <div class="sidebar">
                 <div class="sidebar-header">
                     <h2>Chats</h2>
+                    <div class="search-container">
+                        <input type="text" id="chat-search" placeholder="Search chats..." />
+                        <button id="clear-search" class="clear-search-btn">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
                     <button class="new-chat-button" title="New Chat">
                         <i class="fas fa-plus"></i>
                     </button>

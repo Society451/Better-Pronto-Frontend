@@ -18,19 +18,39 @@ const chatData = [
     }
 ];
 
+// Keep track of the current search term
+let currentSearchTerm = '';
+
 // Function to render chat items
-function renderChatList() {
+function renderChatList(searchTerm = '') {
     const chatList = document.getElementById('chat-list');
     if (!chatList) {
         console.error('Chat list element not found');
         return;
     }
     
+    // Store the current search term
+    currentSearchTerm = searchTerm.toLowerCase().trim();
+    
     // Clear existing items
     chatList.innerHTML = '';
     
-    // Create chat items
-    chatData.forEach(chat => {
+    // Filter chats based on search term if provided
+    const filteredChats = currentSearchTerm 
+        ? chatData.filter(chat => chat.name.toLowerCase().includes(currentSearchTerm))
+        : chatData;
+    
+    // If no results found, show a message
+    if (filteredChats.length === 0) {
+        const noResults = document.createElement('div');
+        noResults.className = 'no-results';
+        noResults.textContent = 'No chats found';
+        chatList.appendChild(noResults);
+        return;
+    }
+    
+    // Create chat items for filtered results
+    filteredChats.forEach(chat => {
         const chatItem = document.createElement('div');
         chatItem.className = 'chat-item';
         chatItem.dataset.id = chat.id;
@@ -50,7 +70,13 @@ function renderChatList() {
         
         const chatName = document.createElement('div');
         chatName.className = 'chat-name';
-        chatName.textContent = chat.name;
+        
+        // If there's a search term, highlight the matching text
+        if (currentSearchTerm) {
+            chatName.innerHTML = highlightText(chat.name, currentSearchTerm);
+        } else {
+            chatName.textContent = chat.name;
+        }
         
         chatContent.appendChild(chatName);
         
@@ -101,6 +127,19 @@ function renderChatList() {
     setupEventListeners();
 }
 
+// Function to highlight search terms in text
+function highlightText(text, searchTerm) {
+    if (!searchTerm) return text;
+    
+    const regex = new RegExp(`(${escapeRegExp(searchTerm)})`, 'gi');
+    return text.replace(regex, '<span class="highlight">$1</span>');
+}
+
+// Helper function to escape special characters in search term for regex
+function escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 // Set up event listeners for dropdown menus
 function setupEventListeners() {
     // Toggle dropdown menu visibility
@@ -146,6 +185,62 @@ function setupEventListeners() {
     });
 }
 
+// Set up search functionality
+function setupSearchFunctionality() {
+    const searchInput = document.getElementById('chat-search');
+    const clearButton = document.getElementById('clear-search');
+    
+    if (!searchInput || !clearButton) return;
+    
+    // Search input event listener
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.trim();
+        
+        // Show/hide clear button based on search input
+        clearButton.style.display = searchTerm ? 'block' : 'none';
+        
+        // Render filtered chat list
+        renderChatList(searchTerm);
+    });
+    
+    // Clear button event listener
+    clearButton.addEventListener('click', function() {
+        searchInput.value = '';
+        clearButton.style.display = 'none';
+        renderChatList(); // Reset to show all chats
+        searchInput.focus(); // Focus back on the search input
+    });
+    
+    // Handle keyboard shortcuts
+    searchInput.addEventListener('keydown', function(e) {
+        // Escape key to clear search
+        if (e.key === 'Escape') {
+            searchInput.value = '';
+            clearButton.style.display = 'none';
+            renderChatList();
+            searchInput.blur(); // Remove focus from search
+        }
+        
+        // Enter key to select first chat if available
+        if (e.key === 'Enter') {
+            const firstChat = document.querySelector('.chat-item');
+            if (firstChat) {
+                const chatId = parseInt(firstChat.dataset.id);
+                selectChat(chatId);
+                searchInput.blur(); // Remove focus
+            }
+        }
+    });
+    
+    // Shortcut for search focus: Ctrl+F or Command+F
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+            e.preventDefault(); // Prevent browser's default search
+            searchInput.focus();
+        }
+    });
+}
+
 // Handle dropdown item actions
 function handleDropdownAction(action, chatId) {
     const chatIndex = chatData.findIndex(chat => chat.id === chatId);
@@ -173,7 +268,7 @@ function handleDropdownAction(action, chatId) {
     }
     
     // Re-render the chat list after any action
-    renderChatList();
+    renderChatList(currentSearchTerm);
 }
 
 // Function to select a chat
@@ -210,7 +305,7 @@ function simulateStatusChanges() {
         chatData[randomIndex].isOnline = !chatData[randomIndex].isOnline;
         
         // Re-render the chat list
-        renderChatList();
+        renderChatList(currentSearchTerm);
         
         // Update header if the current selection matches the changed chat
         const currentChatId = document.querySelector('.chat-item.selected')?.dataset.id;
@@ -232,6 +327,7 @@ document.addEventListener('click', function() {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded - initializing sidebar');
     renderChatList();
+    setupSearchFunctionality();
     
     // Select the first chat by default if available
     if (chatData.length > 0) {
@@ -248,6 +344,7 @@ if (document.readyState === "complete" ||
     document.readyState === "interactive") {
     console.log('DOM already ready - initializing sidebar immediately');
     renderChatList();
+    setupSearchFunctionality();
     
     // Select the first chat by default if available
     if (chatData.length > 0) {
