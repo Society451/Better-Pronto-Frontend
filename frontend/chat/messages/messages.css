@@ -36,15 +36,15 @@
 .sender {
     font-weight: bold; /* Make the sender's name bold */
     font-size: 14px; /* Slightly larger font size for emphasis */
-    color: #333; /* Darker color for better visibility (was #555) */
+    color: #000; /* Black color for all sender names */
 }
 
 .message.sent .sender {
-    color: #007bff; /* Blue color for the user's messages */
+    color: #000; /* Black color replacing blue */
 }
 
 .message.received .sender {
-    color: #28a745; /* Green color for received messages */
+    color: #000; /* Black color replacing green */
 }
 
 .timestamp {
