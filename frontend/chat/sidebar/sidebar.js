@@ -232,6 +232,28 @@ function setupSearchToggle() {
             toggleButton.title = "Search Chats";
         }
     });
+    
+    // Add event listener for escape key when the search input is focused
+    searchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && isSearchVisible) {
+            // Retract the search bar when escape is pressed
+            isSearchVisible = false;
+            searchContainer.classList.remove('active');
+            toggleButton.classList.remove('active');
+            
+            // Clear search input
+            searchInput.value = '';
+            document.getElementById('clear-search').style.display = 'none';
+            renderChatList(); // Reset to show all chats
+            
+            // Update icon
+            toggleButton.innerHTML = '<i class="fas fa-search"></i>';
+            toggleButton.title = "Search Chats";
+            
+            // Remove focus from the search input
+            searchInput.blur();
+        }
+    });
 }
 
 // Set up search functionality
