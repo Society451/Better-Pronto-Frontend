@@ -14,12 +14,13 @@
     background-color: #ddd;
     display: flex;
     flex-wrap: wrap;
-    justify-content: space-between;
+    justify-content: space-between; /* Changed to space-between for better layout */
     align-items: center;
     border-bottom: 1px solid #ccc;
+    position: relative; /* Added for absolute positioning of children */
 }
 
-/* Search toggle button */
+/* Search toggle button positioned on the right */
 .toggle-search-button {
     background: none;
     border: none;
@@ -32,14 +33,19 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    margin-left: auto; /* Push to the right */
+    z-index: 2; /* Ensure button stays above the search box */
+    transition: color 0.3s ease, background-color 0.3s ease, transform 0.3s ease; /* Added transform for better feedback */
 }
 
 .toggle-search-button:hover {
     background-color: #ccc;
+    transform: scale(1.05); /* Slight scale effect on hover */
 }
 
 .toggle-search-button.active {
     color: #007bff;
+    transform: rotate(90deg); /* Rotate when active for better visual feedback */
 }
 
 /* Title styling */
@@ -47,20 +53,27 @@
     margin: 0;
     font-size: 1.2rem;
     font-weight: 500;
+    margin-right: auto; /* Push to the left, away from search button */
 }
 
-/* Search container styles */
+/* Search container styles with improved animation */
 .search-container {
-    position: relative;
-    flex: 1;
-    margin: 5px 5px 5px 10px;
-    order: 1;
-    width: calc(100% - 50px);
-    display: none; /* Hidden by default */
+    position: absolute;
+    top: 50%;
+    right: 45px; /* Position to the left of the search button */
+    transform: translateY(-50%); /* Center vertically */
+    width: 0; /* Start with no width */
+    opacity: 0;
+    visibility: hidden; /* Hide completely when inactive */
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Use a more dynamic easing function */
+    overflow: hidden; /* Hide content when collapsed */
+    z-index: 1;
 }
 
 .search-container.active {
-    display: block; /* Show when active */
+    width: calc(100% - 60px); /* Expand to full width minus padding and button */
+    opacity: 1;
+    visibility: visible;
 }
 
 #chat-search {
@@ -70,15 +83,16 @@
     border-radius: 15px;
     font-size: 14px;
     background-color: #fff;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease; /* Smooth transition */
 }
 
 #chat-search:focus {
     outline: none;
     border-color: #007bff;
-    box-shadow: 0 0 3px rgba(0, 123, 255, 0.3);
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.4); /* Slightly stronger glow effect */
 }
 
-/* Clear button styles */
+/* Clear button styles with improved animation */
 .clear-search-btn {
     position: absolute;
     right: 8px;
@@ -88,17 +102,31 @@
     border: none;
     color: #999;
     cursor: pointer;
-    display: none; /* Hidden by default */
-    font-size: 12px;
     padding: 0;
     width: 16px;
     height: 16px;
     text-align: center;
     line-height: 1;
+    opacity: 0;
+    visibility: hidden; /* Hide completely when inactive */
+    transition: opacity 0.2s ease, color 0.2s ease, transform 0.2s ease; /* Added transform for feedback */
 }
 
 .clear-search-btn:hover {
     color: #555;
+    transform: translateY(-50%) scale(1.2); /* Scale effect on hover */
+}
+
+.search-container.active .clear-search-btn {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Show clear button when input has content */
+.search-container.has-content .clear-search-btn {
+    display: block;
+    opacity: 1;
+    visibility: visible;
 }
 
 /* No results message */
@@ -250,5 +278,16 @@
     .search-container {
         width: 100%;
         margin: 5px 0;
+        position: relative;
+        transform: none;
+        right: auto;
+        top: auto;
+        max-width: 100%;
+    }
+    
+    .toggle-search-button {
+        position: absolute;
+        top: 8px;
+        right: 8px;
     }
 }
