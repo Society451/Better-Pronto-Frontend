@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Better Pronto UI Update 2.0</title>
-    <link rel="stylesheet" href="../css/chat/sidebar.css">
-    <link rel="stylesheet" href="../css/chat/chat-header.css">
-    <link rel="stylesheet" href="../css/chat/messages.css">
-    <link rel="stylesheet" href="../css/chat/message-input.css">
+    <link rel="stylesheet" href="sidebar/sidebar.css">
+    <link rel="stylesheet" href="chat-header/chat-header.css">
+    <link rel="stylesheet" href="messages/messages.css">
+    <link rel="stylesheet" href="message-input/message-input.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
         /* Layout styles for the chat app */
@@ -70,19 +70,19 @@
 
     <script>
         // Dynamically load components
-        fetch('chat/sidebar.html')
+        fetch('sidebar/sidebar.html')
             .then(response => response.text())
             .then(data => document.getElementById('sidebar-container').innerHTML = data);
 
-        fetch('chat/chat-header.html')
+        fetch('chat-header/chat-header.html')
             .then(response => response.text())
             .then(data => document.getElementById('chat-header-container').innerHTML = data);
 
-        fetch('chat/messages.html')
+        fetch('messages/messages.html')
             .then(response => response.text())
             .then(data => document.getElementById('messages-container').innerHTML = data);
 
-        fetch('chat/message-input.html')
+        fetch('message-input/message-input.html')
             .then(response => response.text())
             .then(data => document.getElementById('message-input-container').innerHTML = data);
     </script>
