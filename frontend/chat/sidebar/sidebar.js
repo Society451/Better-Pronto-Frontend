@@ -20,6 +20,7 @@ const chatData = [
 
 // Keep track of the current search term
 let currentSearchTerm = '';
+let isSearchVisible = false; // Track search visibility
 
 // Function to render chat items
 function renderChatList(searchTerm = '') {
@@ -185,6 +186,44 @@ function setupEventListeners() {
     });
 }
 
+// Function to set up the search toggle functionality
+function setupSearchToggle() {
+    const toggleButton = document.querySelector('.toggle-search-button');
+    const searchContainer = document.querySelector('.search-container');
+    const searchInput = document.getElementById('chat-search');
+    
+    if (!toggleButton || !searchContainer || !searchInput) return;
+    
+    // Set initial state
+    searchContainer.classList.toggle('active', isSearchVisible);
+    
+    // Toggle search visibility when the button is clicked
+    toggleButton.addEventListener('click', function() {
+        isSearchVisible = !isSearchVisible;
+        searchContainer.classList.toggle('active', isSearchVisible);
+        toggleButton.classList.toggle('active', isSearchVisible);
+        
+        // If showing search, focus the input
+        if (isSearchVisible) {
+            searchInput.focus();
+        } else {
+            // If hiding search, clear it
+            searchInput.value = '';
+            document.getElementById('clear-search').style.display = 'none';
+            renderChatList(); // Reset to show all chats
+        }
+        
+        // Update icon based on state
+        if (isSearchVisible) {
+            toggleButton.innerHTML = '<i class="fas fa-times"></i>';
+            toggleButton.title = "Close Search";
+        } else {
+            toggleButton.innerHTML = '<i class="fas fa-search"></i>';
+            toggleButton.title = "Search Chats";
+        }
+    });
+}
+
 // Set up search functionality
 function setupSearchFunctionality() {
     const searchInput = document.getElementById('chat-search');
@@ -328,6 +367,7 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded - initializing sidebar');
     renderChatList();
     setupSearchFunctionality();
+    setupSearchToggle(); // Add search toggle setup
     
     // Select the first chat by default if available
     if (chatData.length > 0) {
@@ -345,6 +385,7 @@ if (document.readyState === "complete" ||
     console.log('DOM already ready - initializing sidebar immediately');
     renderChatList();
     setupSearchFunctionality();
+    setupSearchToggle(); // Add search toggle setup
     
     // Select the first chat by default if available
     if (chatData.length > 0) {

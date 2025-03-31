@@ -19,6 +19,29 @@
     border-bottom: 1px solid #ccc;
 }
 
+/* Search toggle button */
+.toggle-search-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    color: #555;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toggle-search-button:hover {
+    background-color: #ccc;
+}
+
+.toggle-search-button.active {
+    color: #007bff;
+}
+
 /* Title styling */
 .sidebar-header h2 {
     margin: 0;
@@ -30,9 +53,14 @@
 .search-container {
     position: relative;
     flex: 1;
-    margin: 5px 5px 5px 0;
+    margin: 5px 5px 5px 10px;
     order: 1;
-    width: 100%;
+    width: calc(100% - 50px);
+    display: none; /* Hidden by default */
+}
+
+.search-container.active {
+    display: block; /* Show when active */
 }
 
 #chat-search {
@@ -79,25 +107,6 @@
     text-align: center;
     color: #777;
     font-style: italic;
-}
-
-.new-chat-button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 16px;
-    color: #555;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-left: 5px;
-}
-
-.new-chat-button:hover {
-    background-color: #ccc;
 }
 
 .chat-list {
@@ -241,11 +250,5 @@
     .search-container {
         width: 100%;
         margin: 5px 0;
-    }
-    
-    .new-chat-button {
-        position: absolute;
-        top: 8px;
-        right: 8px;
     }
 }
