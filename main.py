@@ -55,4 +55,4 @@ window = webview.create_window(
     maximized=True,
     zoomable=True,
 )
-webview.start(debug=True)
+webview.start(debug=False)
