@@ -46,6 +46,56 @@ def sanitize_folder_name(name):
     sanitized_name = re.sub(r'[<>:"/\\|?*]', '_', name)
     return sanitized_name
 
+def download_image(image_url, save_path, access_token):
+    """Download an image file and save it to the specified path."""
+    try:
+        # Create directory if it doesn't exist
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        
+        # Set up headers with authorization
+        headers = {
+            "Authorization": f"Bearer {access_token}"
+        }
+        
+        print(f"Downloading image from {image_url}")
+        
+        # Make the request with headers
+        response = requests.get(image_url, headers=headers, stream=True)
+        response.raise_for_status()  # Raise an exception for HTTP errors
+
+        # Get content type from headers to determine file extension
+        content_type = response.headers.get('content-type')
+        extension = None
+        if content_type:
+            extension = mimetypes.guess_extension(content_type)
+            # Fix common extension issues
+            if extension == '.jpe':
+                extension = '.jpg'
+            elif extension == '.jpeg':
+                extension = '.jpg'
+                
+            if extension and not save_path.lower().endswith(extension.lower()):
+                save_path = f"{save_path}{extension}"
+                print(f"Adding extension {extension} based on content type {content_type}")
+        
+        # Save the file
+        with open(save_path, 'wb') as file:
+            for chunk in response.iter_content(chunk_size=8192):
+                if chunk:
+                    file.write(chunk)
+            
+        print(f"Successfully downloaded image to {save_path}")
+        
+        # Verify file exists and has content
+        if os.path.exists(save_path) and os.path.getsize(save_path) > 0:
+            return True, save_path, extension  # Return success, path and extension
+        else:
+            print(f"Warning: Downloaded file is empty or missing: {save_path}")
+            return False, save_path, extension
+    except Exception as e:
+        print(f"Error downloading image: {e}")
+        return False, save_path, None
+
 class Api:
     def __init__(self, accesstoken):
         self.email = ""
