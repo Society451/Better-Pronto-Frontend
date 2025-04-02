@@ -12,6 +12,7 @@ let isLiveDataLoading = false; // Track if we're loading live data
 let currentSearchTerm = '';
 let isSearchVisible = false; // Track search visibility
 let collapsedCategories = {}; // Keep track of collapsed state
+let currentSelectedBubbleId = null;
 
 // Check if pywebview API is available
 function checkApiAvailability() {
@@ -48,7 +49,7 @@ async function loadInitialChatData() {
         
         console.log('Initial chat data loaded from local storage:', {
             dms: directMessages.length,
-            categories: Object.keys(categorizedBubbles).length,
+            categories: categories.length,
             uncategorized: uncategorizedBubbles.length,
             unread: unreadBubbles.length
         });
@@ -95,13 +96,18 @@ async function fetchLiveBubbleData() {
         
         console.log('Updated chat data loaded:', {
             dms: directMessages.length,
-            categories: Object.keys(categorizedBubbles).length,
+            categories: categories.length,
             uncategorized: uncategorizedBubbles.length,
             unread: unreadBubbles.length
         });
         
         isDataLoaded = true;
         renderSidebar(currentSearchTerm);
+        
+        // If there's a currently selected bubble, refresh its messages
+        if (currentSelectedBubbleId) {
+            triggerMessagesRefresh(currentSelectedBubbleId);
+        }
     } catch (error) {
         console.error('Error fetching live bubble data:', error);
     } finally {
@@ -139,28 +145,34 @@ function renderSidebar(searchTerm = '') {
     }
     
     // Render unread messages section if there are any
-    if (unreadBubbles.length > 0) {
-        renderChatCategory('Unread', filterChatsBySearch(unreadBubbles, currentSearchTerm), 'unread', chatList);
+    const filteredUnreadBubbles = filterChatsBySearch(unreadBubbles, currentSearchTerm);
+    if (filteredUnreadBubbles.length > 0) {
+        renderChatCategory('Unread', filteredUnreadBubbles, 'unread', chatList);
     }
     
     // Render direct messages
-    renderChatCategory('Direct Messages', filterChatsBySearch(directMessages, currentSearchTerm), 'dm', chatList);
+    const filteredDMs = filterChatsBySearch(directMessages, currentSearchTerm);
+    renderChatCategory('Direct Messages', filteredDMs, 'dm', chatList);
     
-    // Render categorized bubbles
+    // Render categorized bubbles - one category at a time
     for (const category of categories) {
         if (categorizedBubbles[category]) {
-            renderChatCategory(
-                category, 
-                filterChatsBySearch(categorizedBubbles[category], currentSearchTerm), 
-                `category-${category.replace(/\s+/g, '-').toLowerCase()}`, 
-                chatList
-            );
+            const filteredBubbles = filterChatsBySearch(categorizedBubbles[category], currentSearchTerm);
+            if (filteredBubbles.length > 0) {
+                renderChatCategory(
+                    category, 
+                    filteredBubbles, 
+                    `category-${category.replace(/\s+/g, '-').toLowerCase()}`, 
+                    chatList
+                );
+            }
         }
     }
     
     // Render uncategorized bubbles
-    if (uncategorizedBubbles.length > 0) {
-        renderChatCategory('Uncategorized', filterChatsBySearch(uncategorizedBubbles, currentSearchTerm), 'uncategorized', chatList);
+    const filteredUncategorizedBubbles = filterChatsBySearch(uncategorizedBubbles, currentSearchTerm);
+    if (filteredUncategorizedBubbles.length > 0) {
+        renderChatCategory('Uncategorized', filteredUncategorizedBubbles, 'uncategorized', chatList);
     }
     
     // If live data is being loaded, show a subtle indicator
@@ -186,7 +198,9 @@ function renderSidebar(searchTerm = '') {
 // Filter chats based on search term
 function filterChatsBySearch(chats, searchTerm) {
     if (!searchTerm) return chats;
-    return chats.filter(chat => chat.title.toLowerCase().includes(searchTerm));
+    return chats.filter(chat => {
+        return chat.title && chat.title.toLowerCase().includes(searchTerm);
+    });
 }
 
 // Render a category of chats with collapsible header
@@ -236,18 +250,69 @@ function renderChatCategory(categoryName, chats, categoryId, container) {
         chatItemsContainer.classList.add('collapsed');
     }
     
-    // Create chat items
-    chats.forEach(chat => {
+    // Create chat items one by one to avoid rendering issues
+    chats.forEach((chat, index) => {
+        if (!chat.id || !chat.title) {
+            console.warn(`Skipping invalid chat item:`, chat);
+            return;
+        }
+        
         const chatItem = createChatItem(chat);
         chatItemsContainer.appendChild(chatItem);
+        
+        // Add a small delay between rendering each item to avoid browser bottlenecks
+        if (index % 10 === 0 && index > 0 && chats.length > 20) {
+            setTimeout(() => {}, 0);
+        }
     });
     
     categoryContainer.appendChild(chatItemsContainer);
     container.appendChild(categoryContainer);
 }
 
+// Helper function to create an element displaying user initials
+function createInitialsElement(fullName) {
+    if (!fullName || typeof fullName !== 'string') {
+        fullName = 'Unknown';
+    }
+    
+    const initialsDiv = document.createElement('div');
+    initialsDiv.className = 'profile-initials';
+    
+    // Extract initials from name (up to two characters)
+    const initials = fullName
+        .split(' ')
+        .map(name => name.charAt(0))
+        .join('')
+        .substring(0, 2)
+        .toUpperCase();
+    
+    initialsDiv.textContent = initials;
+    
+    // Generate a consistent color based on the name
+    const hue = stringToHue(fullName);
+    initialsDiv.style.backgroundColor = `hsl(${hue}, 60%, 80%)`;
+    initialsDiv.style.color = `hsl(${hue}, 80%, 30%)`;
+    
+    return initialsDiv;
+}
+
+// Helper function to generate a consistent hue from a string
+function stringToHue(str) {
+    let hash = 0;
+    for (let i = 0; str && i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return Math.abs(hash % 360);
+}
+
 // Create a chat item element
 function createChatItem(chat) {
+    if (!chat || !chat.id || !chat.title) {
+        console.error('Invalid chat object:', chat);
+        return document.createElement('div'); // Return empty div to avoid errors
+    }
+    
     const chatItem = document.createElement('div');
     chatItem.className = 'chat-item';
     chatItem.dataset.id = chat.id;
@@ -256,7 +321,26 @@ function createChatItem(chat) {
     const profilePic = document.createElement('div');
     profilePic.className = 'profile-picture';
     
-    // Create and add status indicator (default to offline since we don't have real status)
+    // If chat has a profile picture URL, use it (you would need to add this property to your chat objects)
+    if (chat.profilepicurl) {
+        const img = document.createElement('img');
+        img.src = chat.profilepicurl;
+        img.alt = chat.title;
+        img.className = 'profile-img';
+        
+        // Handle image loading errors by showing initials instead
+        img.onerror = () => {
+            img.style.display = 'none';
+            profilePic.appendChild(createInitialsElement(chat.title));
+        };
+        
+        profilePic.appendChild(img);
+    } else {
+        // No profile picture, show initials
+        profilePic.appendChild(createInitialsElement(chat.title));
+    }
+    
+    // Create and add status indicator (default to offline)
     const statusIndicator = document.createElement('div');
     statusIndicator.className = 'status-indicator status-offline';
     profilePic.appendChild(statusIndicator);
@@ -276,6 +360,14 @@ function createChatItem(chat) {
     }
     
     chatContent.appendChild(chatName);
+    
+    // Create chat preview if available
+    if (chat.preview) {
+        const chatPreview = document.createElement('div');
+        chatPreview.className = 'chat-preview';
+        chatPreview.textContent = chat.preview;
+        chatContent.appendChild(chatPreview);
+    }
     
     // Create dropdown
     const dropdown = document.createElement('div');
@@ -318,7 +410,7 @@ function createChatItem(chat) {
 
 // Function to highlight search terms in text
 function highlightText(text, searchTerm) {
-    if (!searchTerm) return text;
+    if (!searchTerm || !text) return text || '';
     
     const regex = new RegExp(`(${escapeRegExp(searchTerm)})`, 'gi');
     return text.replace(regex, '<span class="highlight">$1</span>');
@@ -523,9 +615,12 @@ function handleDropdownAction(action, chatId) {
     }
 }
 
-// Function to select a chat
+// Function to select a chat and load its messages
 function selectChat(chatId) {
     if (!isApiAvailable) return;
+    
+    // Store the current selected bubble ID
+    currentSelectedBubbleId = chatId;
     
     // Find the chat in our data structures
     let selectedChat = null;
@@ -546,7 +641,10 @@ function selectChat(chatId) {
         selectedChat = uncategorizedBubbles.find(chat => chat.id == chatId);
     }
     
-    if (!selectedChat) return;
+    if (!selectedChat) {
+        console.error(`Chat with ID ${chatId} not found in any data structure`);
+        return;
+    }
     
     // Mark the selected chat item
     document.querySelectorAll('.chat-item').forEach(item => {
@@ -557,10 +655,18 @@ function selectChat(chatId) {
         }
     });
     
-    // Use the API's print_chat_info method for now (to be replaced with actual chat display)
-    if (window.pywebview.api.print_chat_info) {
+    // Update header with the chat name
+    if (window.updateChatHeader) {
+        window.updateChatHeader(selectedChat.title, false); // Default to offline until we know
+    }
+    
+    // Log chat info
+    if (window.pywebview && window.pywebview.api && window.pywebview.api.print_chat_info) {
         window.pywebview.api.print_chat_info(selectedChat.title, chatId);
     }
+    
+    // Load messages for this chat
+    loadBubbleMessages(chatId, selectedChat.title);
     
     // Dispatch custom event for chat selection
     const chatSelectedEvent = new CustomEvent('chatSelected', { 
@@ -571,6 +677,132 @@ function selectChat(chatId) {
         bubbles: true 
     });
     document.dispatchEvent(chatSelectedEvent);
+}
+
+// Function to load messages for a bubble, first local then dynamic
+async function loadBubbleMessages(bubbleId, chatName) {
+    if (!isApiAvailable || !bubbleId) return;
+    
+    // Clear current messages
+    if (window.clearMessages) {
+        window.clearMessages();
+    }
+    
+    // Show loading indicator
+    if (window.showMessageLoadingIndicator) {
+        window.showMessageLoadingIndicator();
+    }
+    
+    try {
+        // Start timer for local messages
+        const localStartTime = performance.now();
+        
+        // Get local messages first
+        const localMessages = await window.pywebview.api.get_Localmessages(bubbleId);
+        
+        // Calculate local fetch time
+        const localFetchTime = performance.now() - localStartTime;
+        
+        // Display local messages if available
+        if (localMessages && localMessages.messages && localMessages.messages.length > 0) {
+            if (window.renderMessages) {
+                window.renderMessages(localMessages.messages, chatName);
+            }
+            
+            // Show toast notification for local messages
+            showToast(`Local messages loaded in ${Math.round(localFetchTime)}ms`, 'success');
+        } else {
+            if (window.showNoMessagesPlaceholder) {
+                window.showNoMessagesPlaceholder();
+            }
+        }
+        
+        // Then get dynamic (live) messages
+        const dynamicStartTime = performance.now();
+        const dynamicMessages = await window.pywebview.api.get_dynamicdetailed_messages(bubbleId);
+        
+        // Calculate dynamic fetch time
+        const dynamicFetchTime = performance.now() - dynamicStartTime;
+        
+        // Display dynamic messages if available and different from local
+        if (dynamicMessages && dynamicMessages.messages && dynamicMessages.messages.length > 0) {
+            if (window.renderMessages) {
+                window.renderMessages(dynamicMessages.messages, chatName);
+            }
+            
+            // Show toast notification for dynamic messages
+            showToast(`Live messages loaded in ${Math.round(dynamicFetchTime)}ms`, 'info');
+        }
+    } catch (error) {
+        console.error(`Error loading messages for bubble ${bubbleId}:`, error);
+        showToast('Error loading messages', 'error');
+    } finally {
+        // Hide loading indicator
+        if (window.hideMessageLoadingIndicator) {
+            window.hideMessageLoadingIndicator();
+        }
+    }
+}
+
+// Function to trigger a refresh of messages for the current bubble
+function triggerMessagesRefresh(bubbleId) {
+    if (!bubbleId) return;
+    
+    // Find the chat in our data structures
+    let selectedChat = null;
+    
+    // Check in direct messages
+    selectedChat = directMessages.find(chat => chat.id == bubbleId);
+    
+    // If not found, check in categorized bubbles
+    if (!selectedChat) {
+        for (const category in categorizedBubbles) {
+            selectedChat = categorizedBubbles[category].find(chat => chat.id == bubbleId);
+            if (selectedChat) break;
+        }
+    }
+    
+    // If still not found, check in uncategorized bubbles
+    if (!selectedChat) {
+        selectedChat = uncategorizedBubbles.find(chat => chat.id == bubbleId);
+    }
+    
+    if (!selectedChat) return;
+    
+    // Load fresh messages
+    loadBubbleMessages(bubbleId, selectedChat.title);
+}
+
+// Toast notification function
+function showToast(message, type = 'info', duration = 3000) {
+    // Create toast container if it doesn't exist
+    let toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toast-container';
+        document.body.appendChild(toastContainer);
+    }
+    
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    
+    // Add to container
+    toastContainer.appendChild(toast);
+    
+    // Animation to show
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 10);
+    
+    // Auto remove
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => {
+            toast.remove();
+        }, 300);
+    }, duration);
 }
 
 // Close dropdown when clicking outside

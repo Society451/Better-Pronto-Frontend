@@ -1,13 +1,25 @@
 // Function to update the chat header with current chat information
-function updateChatHeader(chatName, isOnline = true) {
+function updateChatHeader(chatName, isOnline = false, profilePicUrl = null) {
     const chatHeaderContainer = document.getElementById('chat-header-container');
     if (!chatHeaderContainer) return;
 
     // Create the chat header structure
-    const headerContent = `
+    let headerContent = `
         <div class="chat-header">
             <div class="contact-info">
-                <div class="profile-picture">
+                <div class="profile-picture">`;
+    
+    // Add profile picture or initials
+    if (profilePicUrl) {
+        headerContent += `
+                    <img src="${profilePicUrl}" alt="${chatName}" class="profile-img" onerror="this.style.display='none'; this.parentNode.appendChild(createInitialsElement('${chatName.replace(/'/g, "\\'")}'))">`;
+    } else {
+        // We'll add initials after rendering the HTML
+        headerContent += `<div class="profile-initials"></div>`;
+    }
+    
+    // Add status indicator
+    headerContent += `
                     <div class="status-indicator ${isOnline ? 'status-online' : 'status-offline'}"></div>
                 </div>
                 <h3 id="chat-heading">${chatName || 'Select a chat'}</h3>
@@ -30,8 +42,51 @@ function updateChatHeader(chatName, isOnline = true) {
     
     chatHeaderContainer.innerHTML = headerContent;
     
+    // If no profile picture URL, add initials
+    if (!profilePicUrl) {
+        const initialsContainer = chatHeaderContainer.querySelector('.profile-initials');
+        if (initialsContainer && chatName) {
+            // Create initials element
+            const initialsElement = createInitialsElement(chatName);
+            // Replace the empty placeholder
+            initialsContainer.parentNode.replaceChild(initialsElement, initialsContainer);
+        }
+    }
+    
     // Set up dropdown event listeners
     setupHeaderDropdown();
+}
+
+// Helper function to create an element displaying user initials
+function createInitialsElement(fullName) {
+    const initialsDiv = document.createElement('div');
+    initialsDiv.className = 'profile-initials';
+    
+    // Extract initials from name (up to two characters)
+    const initials = fullName
+        .split(' ')
+        .map(name => name.charAt(0))
+        .join('')
+        .substring(0, 2)
+        .toUpperCase();
+    
+    initialsDiv.textContent = initials;
+    
+    // Generate a consistent color based on the name
+    const hue = stringToHue(fullName);
+    initialsDiv.style.backgroundColor = `hsl(${hue}, 60%, 80%)`;
+    initialsDiv.style.color = `hsl(${hue}, 80%, 30%)`;
+    
+    return initialsDiv;
+}
+
+// Helper function to generate a consistent hue from a string
+function stringToHue(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return hash % 360;
 }
 
 // Set up event listeners for the header dropdown
@@ -103,12 +158,16 @@ function handleHeaderAction(action) {
 // Initialize the header
 document.addEventListener('DOMContentLoaded', function() {
     // Default header with name (will be updated when chat is selected)
-    updateChatHeader('John Doe', true); // Default to first chat, online by default
+    updateChatHeader('Select a chat', false); 
     
     // Listen for chat selection events
     document.addEventListener('chatSelected', function(e) {
         if (e.detail) {
-            updateChatHeader(e.detail.chatName, e.detail.isOnline);
+            updateChatHeader(
+                e.detail.chatName, 
+                e.detail.isOnline || false,
+                e.detail.profilePicUrl || null
+            );
         }
     });
     
@@ -122,9 +181,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+// Make updateChatHeader function available globally
+window.updateChatHeader = updateChatHeader;
+
 // Initialize immediately if DOM is already loaded
 if (document.readyState === "complete" || 
     document.readyState === "loaded" || 
     document.readyState === "interactive") {
-    updateChatHeader('John Doe', true);
+    updateChatHeader('Select a chat', false);
 }

@@ -23,10 +23,33 @@
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background-color: #ddd; /* Blank gray circle */
+    background-color: #ddd; /* Default background for empty profile pics */
     margin: 0 10px;
     flex-shrink: 0; /* Prevent the profile picture from shrinking */
     align-self: flex-start; /* Align to the top of the message */
+    position: relative; /* For positioning status indicator */
+    overflow: hidden; /* Contain the image */
+}
+
+/* Profile image within profile picture container */
+.profile-picture .profile-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Make sure image covers the container properly */
+    border-radius: 50%; /* Keep the circular shape */
+}
+
+/* Profile initials styling */
+.profile-picture .profile-initials {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+    text-transform: uppercase;
+    border-radius: 50%;
 }
 
 /* Message content styles */
@@ -113,6 +136,90 @@
 .message-container.received .profile-picture {
     margin-right: 10px;
     margin-left: 0;
+}
+
+/* Status indicator within profile picture */
+.status-indicator {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid #f9f9f9; /* Match parent background */
+}
+
+.status-online {
+    background-color: #4CAF50; /* Green for online */
+}
+
+.status-offline {
+    background-color: #ccc; /* Grey for offline */
+    opacity: 0.7;
+}
+
+/* Loading state and empty state styling */
+.messages-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #777;
+}
+
+.loading-spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 15px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.no-messages-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+.empty-state {
+    text-align: center;
+    color: #999;
+    padding: 20px;
+}
+
+.empty-state i {
+    font-size: 50px;
+    margin-bottom: 15px;
+    opacity: 0.5;
+}
+
+.empty-state p {
+    margin: 5px 0;
+    font-size: 16px;
+}
+
+.empty-state .hint {
+    font-size: 14px;
+    opacity: 0.7;
+}
+
+/* Message deletion animation */
+.message-container.deleting {
+    opacity: 0;
+    height: 0;
+    margin: 0;
+    padding: 0;
+    transition: opacity 0.3s, height 0.3s, margin 0.3s, padding 0.3s;
 }
 
 /* Responsive adjustments */
