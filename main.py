@@ -32,7 +32,7 @@ def getLocalAccesstoken():
 getLocalAccesstoken()
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-html_path = os.path.join(current_dir, 'frontend', 'html', 'chat.html')
+html_path = os.path.join(current_dir, 'frontend', 'chat', 'chat-index.html')
 
 # Function to save response data to a file
 def save_response_to_file(response_data, file_path):
