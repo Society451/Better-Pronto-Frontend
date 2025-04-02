@@ -142,6 +142,50 @@
     overflow-y: auto;
 }
 
+/* Styles for chat categories */
+.chat-category {
+    margin-bottom: 5px;
+}
+
+.category-header {
+    display: flex;
+    align-items: center;
+    padding: 8px 10px;
+    background-color: #e5e5e5;
+    cursor: pointer;
+    user-select: none;
+    border-bottom: 1px solid #ddd;
+    transition: background-color 0.2s ease;
+}
+
+.category-header:hover {
+    background-color: #ddd;
+}
+
+.category-header i {
+    margin-right: 8px;
+    transition: transform 0.2s ease;
+    width: 16px;
+    text-align: center;
+}
+
+.category-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #444;
+    flex: 1;
+}
+
+.category-items {
+    max-height: 1000px;
+    overflow: hidden;
+    transition: max-height 0.3s ease-in-out;
+}
+
+.category-items.collapsed {
+    max-height: 0;
+}
+
 .chat-item {
     padding: 10px;
     border-bottom: 1px solid #ddd;
@@ -149,6 +193,7 @@
     display: flex;
     align-items: center;
     position: relative;
+    transition: background-color 0.2s ease;
 }
 
 .chat-item:hover {
@@ -157,6 +202,7 @@
 
 .chat-item.selected {
     background-color: #e0e0e0;
+    border-left: 3px solid #007bff;
 }
 
 /* Profile picture styles with status indicator */
@@ -266,6 +312,30 @@
 /* Highlight search results */
 .highlight {
     background-color: #ffffa0;
+}
+
+/* Loading indicator */
+.loading-indicator {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    color: #777;
+}
+
+.loading-spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
+    margin-right: 10px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 /* Media queries for responsive design */
