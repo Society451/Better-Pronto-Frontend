@@ -1,0 +1,1 @@
+remove the 60 second refresh interval for live bubbles
