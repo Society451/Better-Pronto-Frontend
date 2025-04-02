@@ -14,12 +14,38 @@
     padding: 8px;
     background-color: #ddd;
     display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between; /* Changed to space-between for better layout */
+    justify-content: flex-end; /* Changed to align items to the right */
     align-items: center;
     border-bottom: 1px solid #ccc;
     position: relative; /* Added for absolute positioning of children */
     flex-shrink: 0; /* Prevent header from shrinking */
+    gap: 8px; /* Add spacing between buttons */
+}
+
+/* Collapse all button */
+.collapse-all-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    color: #555;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.3s ease, background-color 0.3s ease, transform 0.3s ease;
+}
+
+.collapse-all-button:hover {
+    background-color: #ccc;
+    transform: scale(1.05);
+}
+
+.collapse-all-button.active {
+    color: #007bff;
+    transform: rotate(180deg);
 }
 
 /* Search toggle button positioned on the right */
@@ -35,7 +61,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-left: auto; /* Push to the right */
     z-index: 2; /* Ensure button stays above the search box */
     transition: color 0.3s ease, background-color 0.3s ease, transform 0.3s ease; /* Added transform for better feedback */
 }
@@ -73,7 +98,7 @@
 }
 
 .search-container.active {
-    width: calc(100% - 60px); /* Expand to full width minus padding and button */
+    width: calc(100% - 100px); /* Expand to full width minus padding and buttons */
     opacity: 1;
     visibility: visible;
 }
@@ -212,14 +237,16 @@
     overflow: visible;
     display: block; /* Important - ensures elements stack properly */
     width: 100%;
-    transition: max-height 0.3s ease;
+    transition: max-height 0.3s ease, opacity 0.3s ease;
     background-color: #f4f4f4;
+    opacity: 1;
 }
 
 .category-items.collapsed {
     max-height: 0;
     overflow: hidden;
     display: none;
+    opacity: 0;
 }
 
 /* Chat item styling for better separation */
@@ -491,6 +518,12 @@
         position: absolute;
         top: 8px;
         right: 8px;
+    }
+
+    .collapse-all-button {
+        position: absolute;
+        top: 8px;
+        right: 45px;
     }
     
     #toast-container {

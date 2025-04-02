@@ -511,19 +511,32 @@ document.addEventListener('DOMContentLoaded', function() {
     window.showNoMessagesPlaceholder = showNoMessagesPlaceholder;
     
     // Function to add a new message to the chat (used by message input component)
-    window.addMessageToChat = function(sender, text, isSent) {
+    window.addMessageToChat = function(messageData) {
         const messagesContainer = document.getElementById('messages');
         if (!messagesContainer || !currentChatId) return;
         
-        // Create message object in our API format
-        const messageObj = {
-            time_of_sending: Math.floor(Date.now() / 1000),
-            author: sender,
-            profilepicurl: null,
-            message_id: `temp-${Date.now()}`, // Temporary ID until we get real one from API
-            content: text,
-            is_sent_by_me: isSent
-        };
+        let messageObj = null;
+        
+        // Handle different message formats:
+        // 1. API response format from send_message (message inside response.message)
+        if (messageData.ok === true && messageData.message) {
+            messageObj = messageData.message;
+        }
+        // 2. Directly passed message object from API response
+        else if (messageData.id && (messageData.message || messageData.content)) {
+            messageObj = messageData;
+        }
+        // 3. Simple temporary message format from message-input.js
+        else {
+            messageObj = {
+                id: messageData.id || `temp-${Date.now()}`,
+                message: messageData.message || messageData.content,
+                created_at: messageData.created_at || new Date().toISOString().replace('T', ' ').split('.')[0],
+                user: messageData.user || {
+                    fullname: messageData.author || 'You'
+                }
+            };
+        }
         
         // Add to current messages
         currentMessages.push(messageObj);
@@ -550,23 +563,35 @@ document.addEventListener('DOMContentLoaded', function() {
         autoScrollToBottom = true;
         scrollToBottom(messagesContainer);
         
-        // Send message via API if available
-        if (window.pywebview && window.pywebview.api && window.pywebview.api.send_message) {
-            // Get current user ID (you would need to implement proper user identification)
-            const userID = null; // This would need to be obtained from your auth system
-            
-            window.pywebview.api.send_message(currentChatId, text, userID)
-                .then(response => {
-                    console.log('Message sent via API:', response);
-                    
-                    // After successful send, refresh messages to get the proper message ID
-                    if (window.triggerMessagesRefresh) {
-                        window.triggerMessagesRefresh(currentChatId);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error sending message:', error);
-                });
+        // If not already sending via API (we only have temp message object)
+        if (!messageObj.user || messageObj.user.fullname === 'You' || messageObj.id.toString().startsWith('temp')) {
+            // Send message via API if available
+            if (window.pywebview && window.pywebview.api && window.pywebview.api.send_message) {
+                const messageText = messageObj.message || messageObj.content;
+                
+                console.log(`Sending message to bubble ID ${currentChatId}: ${messageText}`);
+                
+                window.pywebview.api.send_message(currentChatId, messageText)
+                    .then(response => {
+                        console.log('Message sent via API:', response);
+                        
+                        if (response && response.ok && response.message) {
+                            // Update the temporary message with real data
+                            const tempMessageElement = messagesContainer.querySelector(`.message-container[data-message-id="${messageObj.id}"]`);
+                            if (tempMessageElement) {
+                                tempMessageElement.dataset.messageId = response.message.id;
+                            }
+                        }
+                        
+                        // After successful send, refresh messages to get the proper message ID
+                        if (window.triggerMessagesRefresh) {
+                            window.triggerMessagesRefresh(currentChatId);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error sending message:', error);
+                    });
+            }
         }
         
         return messageObj;

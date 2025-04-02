@@ -13,6 +13,7 @@ let currentSearchTerm = '';
 let isSearchVisible = false; // Track search visibility
 let collapsedCategories = {}; // Keep track of collapsed state
 let currentSelectedBubbleId = null;
+let allCategoriesCollapsed = false; // State for collapse all button
 
 // Check if pywebview API is available
 function checkApiAvailability() {
@@ -147,6 +148,10 @@ function renderSidebar(searchTerm = '') {
     // Render unread messages section if there are any
     const filteredUnreadBubbles = filterChatsBySearch(unreadBubbles, currentSearchTerm);
     if (filteredUnreadBubbles.length > 0) {
+        // Always make sure unread category is expanded unless in "all collapsed" mode
+        if (!allCategoriesCollapsed) {
+            collapsedCategories['unread'] = false;
+        }
         renderChatCategory('Unread', filteredUnreadBubbles, 'unread', chatList);
     }
     
@@ -193,6 +198,9 @@ function renderSidebar(searchTerm = '') {
     
     // Set up event listeners
     setupEventListeners();
+    
+    // Update the collapse all button state
+    updateCollapseAllButtonState();
 }
 
 // Filter chats based on search term
@@ -237,6 +245,9 @@ function renderChatCategory(categoryName, chats, categoryId, container) {
         const isCollapsed = chatItems.classList.toggle('collapsed');
         collapsedCategories[categoryId] = isCollapsed;
         toggleIcon.className = isCollapsed ? 'fas fa-chevron-right' : 'fas fa-chevron-down';
+        
+        // Update collapse all button state after toggling
+        updateCollapseAllButtonState();
     });
     
     categoryContainer.appendChild(categoryHeader);
@@ -466,6 +477,52 @@ function setupEventListeners() {
     });
 }
 
+// Function to toggle collapse state for all categories
+function toggleCollapseAll() {
+    // Toggle the global state
+    allCategoriesCollapsed = !allCategoriesCollapsed;
+    
+    // Apply to all categories
+    const categories = document.querySelectorAll('.chat-category');
+    categories.forEach(category => {
+        const categoryId = category.dataset.categoryId;
+        const chatItems = category.querySelector('.category-items');
+        const toggleIcon = category.querySelector('.category-header i');
+        
+        if (chatItems && toggleIcon) {
+            if (allCategoriesCollapsed) {
+                chatItems.classList.add('collapsed');
+                toggleIcon.className = 'fas fa-chevron-right';
+                collapsedCategories[categoryId] = true;
+            } else {
+                chatItems.classList.remove('collapsed');
+                toggleIcon.className = 'fas fa-chevron-down';
+                collapsedCategories[categoryId] = false;
+            }
+        }
+    });
+    
+    // Update button state
+    updateCollapseAllButtonState();
+}
+
+// Update the collapse all button state based on categories
+function updateCollapseAllButtonState() {
+    const collapseAllButton = document.querySelector('.collapse-all-button');
+    if (!collapseAllButton) return;
+    
+    // If all categories are collapsed, show "expand all" state
+    if (allCategoriesCollapsed) {
+        collapseAllButton.title = "Expand All Categories";
+        collapseAllButton.innerHTML = '<i class="fas fa-expand-alt"></i>';
+        collapseAllButton.classList.add('active');
+    } else {
+        collapseAllButton.title = "Collapse All Categories";
+        collapseAllButton.innerHTML = '<i class="fas fa-compress-alt"></i>';
+        collapseAllButton.classList.remove('active');
+    }
+}
+
 // Function to set up the search toggle functionality
 function setupSearchToggle() {
     const toggleButton = document.querySelector('.toggle-search-button');
@@ -585,6 +642,17 @@ function setupSearchFunctionality() {
             searchInput.focus();
         }
     });
+}
+
+// Set up collapse all button functionality
+function setupCollapseAllButton() {
+    const collapseAllButton = document.querySelector('.collapse-all-button');
+    if (!collapseAllButton) return;
+    
+    collapseAllButton.addEventListener('click', toggleCollapseAll);
+    
+    // Initialize button state
+    updateCollapseAllButtonState();
 }
 
 // Handle dropdown item actions
@@ -817,6 +885,7 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded - initializing sidebar');
     setupSearchFunctionality();
     setupSearchToggle();
+    setupCollapseAllButton();
     
     // Check for API availability
     checkApiAvailability();
@@ -829,6 +898,7 @@ if (document.readyState === "complete" ||
     console.log('DOM already ready - initializing sidebar immediately');
     setupSearchFunctionality();
     setupSearchToggle();
+    setupCollapseAllButton();
     
     // Check for API availability
     checkApiAvailability();

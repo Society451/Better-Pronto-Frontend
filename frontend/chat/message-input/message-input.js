@@ -103,7 +103,17 @@ function sendMessage() {
         // In a real application, this would send the message to a server
         // For now, we'll just add it to the messages container
         if (window.addMessageToChat) {
-            window.addMessageToChat('You', messageText, true);
+            // Temporarily add a message with local data
+            const tempMessageObj = {
+                message: messageText,
+                user: {
+                    fullname: 'You'
+                },
+                created_at: new Date().toISOString().replace('T', ' ').split('.')[0],
+                id: `temp-${Date.now()}`
+            };
+            
+            window.addMessageToChat(tempMessageObj);
         }
         
         // Clear the input field
@@ -121,14 +131,14 @@ function sendMessage() {
 }
 
 // Function to add a message to the chat
-function addMessageToChat(sender, text, isSent) {
+function addMessageToChat(messageObj) {
     const messagesContainer = document.querySelector('#messages');
     
     if (!messagesContainer) return;
     
     // Create message element
     const messageElement = document.createElement('div');
-    messageElement.className = `message ${isSent ? 'sent' : 'received'}`;
+    messageElement.className = `message ${messageObj.user.fullname === 'You' ? 'sent' : 'received'}`;
     
     // Create message header
     const messageHeader = document.createElement('div');
@@ -137,12 +147,12 @@ function addMessageToChat(sender, text, isSent) {
     // Create sender element
     const senderElement = document.createElement('span');
     senderElement.className = 'sender';
-    senderElement.textContent = sender;
+    senderElement.textContent = messageObj.user.fullname;
     
     // Create timestamp element
     const timestamp = document.createElement('span');
     timestamp.className = 'timestamp';
-    timestamp.textContent = getCurrentTime();
+    timestamp.textContent = messageObj.created_at.split(' ')[1];
     
     // Add sender and timestamp to header
     messageHeader.appendChild(senderElement);
@@ -150,7 +160,7 @@ function addMessageToChat(sender, text, isSent) {
     
     // Create message text
     const messageParagraph = document.createElement('p');
-    messageParagraph.textContent = text;
+    messageParagraph.textContent = messageObj.message;
     
     // Add header and text to message
     messageElement.appendChild(messageHeader);
