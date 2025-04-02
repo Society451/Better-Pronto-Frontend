@@ -170,141 +170,9 @@ class Api:
                 print("No messages found.")
                 return {"messages": detailed_messages}
 
-            # Prepare bubble folder path
-            sanitized_bubble_id = sanitize_folder_name(f"{bubbleID}")
-            bubble_folder_path = None
-            for root, dirs, files in os.walk(chats_path):
-                for dir_name in dirs:
-                    if dir_name == sanitized_bubble_id:
-                        bubble_folder_path = os.path.join(root, dir_name)
-                        break
-                if bubble_folder_path:
-                    break
-
-            if not bubble_folder_path:
-                print(f"No folder found for bubble ID: {bubbleID}")
-                bubble_folder_path = os.path.join(chats_path, sanitized_bubble_id)
-                os.makedirs(bubble_folder_path, exist_ok=True)
-            
-            # Create media folder within bubble folder
-            media_folder = os.path.join(bubble_folder_path, "media")
-            os.makedirs(media_folder, exist_ok=True)
-
             for message in messages:
                 if isinstance(message, dict):
                     content = message.get("message", "")
-                    has_image = False
-                    image_data = None
-                    
-                    # Check if message has media
-                    if 'messagemedia' in message and message['messagemedia'] and len(message['messagemedia']) > 0:
-                        media_item = message['messagemedia'][0]  # Get first media item
-                        has_image = True
-                        
-                        # Check if it's an external GIF (from Giphy, etc.)
-                        if media_item.get('external', False) and media_item.get('url'):
-                            # Handle external GIF or image that doesn't need downloading
-                            image_data = {
-                                'id': media_item.get('id'),
-                                'url': media_item.get('url'),
-                                'is_external': True,
-                                'title': media_item.get('title', ''),
-                                'width': media_item.get('width'),
-                                'height': media_item.get('height'),
-                                'mediatype': media_item.get('mediatype'),
-                                'mime_type': media_item.get('urlmimetype')
-                            }
-                            print(f"External media found: {image_data['url']}")
-                        # Regular internal image that needs path processing
-                        elif media_item.get('path'):
-                            # Get path components
-                            path = media_item.get('path', '')
-                            if path:
-                                # Parse out the user_id and file_name from the path
-                                path_parts = path.strip('/').split('/')
-                                if len(path_parts) >= 3:
-                                    folder_id = path_parts[-2]
-                                    file_name = path_parts[-1]
-                                    
-                                    # Create local storage structure
-                                    local_folder = os.path.join(media_folder, folder_id)
-                                    os.makedirs(local_folder, exist_ok=True)
-                                    
-                                    # Add file extension from mime type if available
-                                    mime_type = media_item.get('urlmimetype')
-                                    extension = ''
-                                    if mime_type:
-                                        extension = mimetypes.guess_extension(mime_type) or ''
-                                        # Fix common extension issues
-                                        if extension == '.jpe':
-                                            extension = '.jpg'
-                                        elif extension == '.jpeg':
-                                            extension = '.jpg'
-                                        
-                                        if extension and not file_name.lower().endswith(extension.lower()):
-                                            file_name = f"{file_name}{extension}"
-                                    
-                                    local_image_path = os.path.join(local_folder, file_name)
-                                    
-                                    # Full URL to the media file
-                                    media_url = f"https://files.chat.trypronto.com{path}"
-                                    
-                                    # Download the image only if it doesn't exist
-                                    download_success = False
-                                    actual_path = local_image_path
-                                    if not os.path.exists(local_image_path):
-                                        download_success, actual_path, actual_ext = download_image(media_url, local_image_path, accesstoken)
-                                        if actual_ext and actual_ext != extension:
-                                            extension = actual_ext
-                                            file_name = os.path.basename(actual_path)
-                                    else:
-                                        download_success = True
-                                        print(f"Image already exists at {local_image_path}")
-                                    
-                                    # Get the relative path with actual filename including extension
-                                    relative_path = os.path.join('media', folder_id, file_name).replace('\\', '/')
-                                    
-                                    # Store media info
-                                    image_data = {
-                                        'id': media_item.get('id'),
-                                        'url': media_url,
-                                        'local_path': actual_path if download_success else None,
-                                        'relative_path': relative_path if download_success else None,
-                                        'title': media_item.get('title', ''),
-                                        'width': media_item.get('width'),
-                                        'height': media_item.get('height'),
-                                        'mediatype': media_item.get('mediatype'),
-                                        'mime_type': media_item.get('urlmimetype'),
-                                        'file_extension': extension
-                                    }
-                        else:
-                            # Handle case where media exists but has neither external URL nor path
-                            print(f"Media without path or external URL: {media_item}")
-                            if media_item.get('url'):
-                                # Use URL directly if available
-                                image_data = {
-                                    'id': media_item.get('id'),
-                                    'url': media_item.get('url'),
-                                    'is_external': True,
-                                    'title': media_item.get('title', ''),
-                                    'width': media_item.get('width'),
-                                    'height': media_item.get('height'),
-                                    'mediatype': media_item.get('mediatype'),
-                                    'mime_type': media_item.get('urlmimetype')
-                                }
-                    
-                    # Check for URLs in the content
-                    elif content:
-                        # Check for common image patterns in message content
-                        image_pattern = re.compile(r'https?://[^\s]+\.(jpg|jpeg|png|gif|bmp|webp)', re.IGNORECASE)
-                        if image_pattern.search(content):
-                            has_image = True
-                        # Check for markdown image syntax
-                        if re.search(r'!\[.*?\]\(.*?\)', content):
-                            has_image = True
-                        # Check for HTML img tag
-                        if re.search(r'<img[^>]+src="[^"]+"[^>]*>', content):
-                            has_image = True
 
                     detailed_message = {
                         "time_of_sending": message.get("created_at"),
@@ -316,24 +184,14 @@ class Api:
                         "parent_message": message.get("parentmessage_id"),
                         "reactions": message.get("reactionsummary", []),
                         "content": content,
-                        "has_image": has_image,
-                        "image_data": image_data,
-                        "media": message.get("messagemedia")  # Include the full media data for reference
                     }
                     
                     # Add message regardless of missing data
                     detailed_messages.append(detailed_message)
-                    
-                    # Debug log for messages with media
-                    if has_image:
-                        if image_data and image_data.get('is_external'):
-                            print(f"Message has external media: {image_data}")
-                        elif not image_data:
-                            print(f"Message has image flag but no image data: {message.get('id')}")
-                        if 'messagemedia' in message:
-                            print(f"Message has messagemedia: {message['messagemedia']}")
 
             # Save messages to files
+            bubble_folder_path = os.path.join(chats_path, sanitize_folder_name(f"{bubbleID}"))
+            os.makedirs(bubble_folder_path, exist_ok=True)
             messages_file_path = os.path.join(bubble_folder_path, "messages.json")
             full_messages_file_path = os.path.join(bubble_folder_path, "fullmessages.json")
             with open(messages_file_path, "w") as file:
