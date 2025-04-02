@@ -8,6 +8,7 @@ let categories = [];
 // Track API availability and chat data loading
 let isApiAvailable = false;
 let isDataLoaded = false;
+let isLiveDataLoading = false; // Track if we're loading live data
 let currentSearchTerm = '';
 let isSearchVisible = false; // Track search visibility
 let collapsedCategories = {}; // Keep track of collapsed state
@@ -17,19 +18,19 @@ function checkApiAvailability() {
     if (window.pywebview && window.pywebview.api) {
         console.log('PyWebView API is available');
         isApiAvailable = true;
-        loadChatData();
+        loadInitialChatData();
     } else {
         console.log('PyWebView API not available yet, retrying in 500ms');
         setTimeout(checkApiAvailability, 500);
     }
 }
 
-// Load chat data from API
-async function loadChatData() {
+// Load initial chat data from local storage
+async function loadInitialChatData() {
     try {
-        console.log('Loading chat data from API...');
+        console.log('Loading initial chat data from local storage...');
         
-        // Fetch all data in parallel for better performance
+        // Load local data first (in parallel)
         const [dms, categorizedChats, uncategorizedChats, unreadChats, categoryList] = await Promise.all([
             window.pywebview.api.get_Localdms(),
             window.pywebview.api.get_Localcategorized_bubbles(),
@@ -45,7 +46,7 @@ async function loadChatData() {
         unreadBubbles = unreadChats || [];
         categories = categoryList || [];
         
-        console.log('Chat data loaded:', {
+        console.log('Initial chat data loaded from local storage:', {
             dms: directMessages.length,
             categories: Object.keys(categorizedBubbles).length,
             uncategorized: uncategorizedBubbles.length,
@@ -54,10 +55,60 @@ async function loadChatData() {
         
         isDataLoaded = true;
         renderSidebar();
+        
+        // Then, fetch live data in the background
+        fetchLiveBubbleData();
     } catch (error) {
-        console.error('Error loading chat data:', error);
+        console.error('Error loading initial chat data:', error);
         // Retry after a short delay
-        setTimeout(loadChatData, 2000);
+        setTimeout(loadInitialChatData, 2000);
+    }
+}
+
+// Fetch live bubble data from the server
+async function fetchLiveBubbleData() {
+    if (isLiveDataLoading) return;
+    
+    try {
+        isLiveDataLoading = true;
+        console.log('Fetching live bubble data...');
+        
+        // Call the API to get live bubbles data
+        await window.pywebview.api.get_live_bubbles();
+        console.log('Live bubble data fetched and saved');
+        
+        // Reload data from local storage (which should now contain updated data)
+        const [dms, categorizedChats, uncategorizedChats, unreadChats, categoryList] = await Promise.all([
+            window.pywebview.api.get_Localdms(),
+            window.pywebview.api.get_Localcategorized_bubbles(),
+            window.pywebview.api.get_Localuncategorized_bubbles(),
+            window.pywebview.api.get_Localunread_bubbles(),
+            window.pywebview.api.get_Localcategories()
+        ]);
+        
+        // Update the data with fresh information
+        directMessages = dms || [];
+        categorizedBubbles = categorizedChats || {};
+        uncategorizedBubbles = uncategorizedChats || [];
+        unreadBubbles = unreadChats || [];
+        categories = categoryList || [];
+        
+        console.log('Updated chat data loaded:', {
+            dms: directMessages.length,
+            categories: Object.keys(categorizedBubbles).length,
+            uncategorized: uncategorizedBubbles.length,
+            unread: unreadBubbles.length
+        });
+        
+        isDataLoaded = true;
+        renderSidebar(currentSearchTerm);
+    } catch (error) {
+        console.error('Error fetching live bubble data:', error);
+    } finally {
+        isLiveDataLoading = false;
+        
+        // Schedule periodic refresh
+        setTimeout(fetchLiveBubbleData, 60000); // Refresh every minute
     }
 }
 
@@ -74,6 +125,18 @@ function renderSidebar(searchTerm = '') {
     
     // Clear existing items
     chatList.innerHTML = '';
+    
+    // If still loading data initially, show loading indicator
+    if (!isDataLoaded) {
+        const loadingIndicator = document.createElement('div');
+        loadingIndicator.className = 'loading-indicator';
+        loadingIndicator.innerHTML = `
+            <div class="loading-spinner"></div>
+            <span>Loading chats...</span>
+        `;
+        chatList.appendChild(loadingIndicator);
+        return;
+    }
     
     // Render unread messages section if there are any
     if (unreadBubbles.length > 0) {
@@ -100,8 +163,16 @@ function renderSidebar(searchTerm = '') {
         renderChatCategory('Uncategorized', filterChatsBySearch(uncategorizedBubbles, currentSearchTerm), 'uncategorized', chatList);
     }
     
+    // If live data is being loaded, show a subtle indicator
+    if (isLiveDataLoading) {
+        const updatingIndicator = document.createElement('div');
+        updatingIndicator.className = 'updating-indicator';
+        updatingIndicator.textContent = 'Updating...';
+        chatList.appendChild(updatingIndicator);
+    }
+    
     // If no results found after filtering, show a message
-    if (currentSearchTerm && chatList.childElementCount === 0) {
+    if (currentSearchTerm && chatList.childElementCount === (isLiveDataLoading ? 1 : 0)) {
         const noResults = document.createElement('div');
         noResults.className = 'no-results';
         noResults.textContent = 'No chats found matching your search';
@@ -436,7 +507,7 @@ function handleDropdownAction(action, chatId) {
                     .then(response => {
                         console.log('Mark as read response:', response);
                         // Refresh data after marking as read
-                        loadChatData();
+                        fetchLiveBubbleData();
                     })
                     .catch(error => console.error('Error marking as read:', error));
             }
