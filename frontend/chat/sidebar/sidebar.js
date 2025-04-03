@@ -438,25 +438,45 @@ function setupEventListeners() {
     document.querySelectorAll('.dropdown-trigger').forEach(trigger => {
         trigger.addEventListener('click', function(e) {
             e.stopPropagation(); // Prevent event bubbling
+            
+            // Get the associated menu
             const menu = this.nextElementSibling;
-            // Close all other dropdowns
+            
+            // First close all other dropdowns
             document.querySelectorAll('.dropdown-menu').forEach(item => {
                 if (item !== menu) {
                     item.classList.remove('active');
                 }
             });
-            // Toggle current dropdown
-            menu.classList.toggle('active');
+            
+            // Toggle current dropdown with a slight delay to ensure proper rendering
+            setTimeout(() => {
+                menu.classList.toggle('active');
+                
+                // Ensure the menu is visible and not clipped
+                const rect = menu.getBoundingClientRect();
+                const viewportHeight = window.innerHeight;
+                
+                // If menu would extend beyond viewport, position it above the trigger instead
+                if (rect.bottom > viewportHeight) {
+                    menu.style.top = 'auto';
+                    menu.style.bottom = '100%';
+                    menu.style.marginBottom = '5px';
+                }
+            }, 0);
         });
     });
     
-    // Handle dropdown item clicks
+    // Handle dropdown item clicks with better event handling
     document.querySelectorAll('.dropdown-item').forEach(item => {
         item.addEventListener('click', function(e) {
+            e.preventDefault(); // Prevent default behavior
             e.stopPropagation(); // Prevent event bubbling
+            
             const action = this.dataset.action;
             const chatId = this.dataset.chatId;
             
+            // Handle the action
             handleDropdownAction(action, chatId);
             
             // Close dropdown
@@ -873,11 +893,14 @@ function showToast(message, type = 'info', duration = 3000) {
     }, duration);
 }
 
-// Close dropdown when clicking outside
-document.addEventListener('click', function() {
-    document.querySelectorAll('.dropdown-menu').forEach(menu => {
-        menu.classList.remove('active');
-    });
+// Improved global click handler to better manage dropdowns
+document.addEventListener('click', function(e) {
+    // Only close dropdowns if clicking outside any dropdown
+    if (!e.target.closest('.dropdown')) {
+        document.querySelectorAll('.dropdown-menu').forEach(menu => {
+            menu.classList.remove('active');
+        });
+    }
 });
 
 // Initialize the sidebar

@@ -200,6 +200,8 @@
     display: block;  /* Change to block to fix layout issues */
     width: 100%;
     border-bottom: 1px solid rgba(0,0,0,0.05);
+    position: relative; /* Added for z-index context */
+    z-index: 1; /* Base z-index for category */
 }
 
 .category-header {
@@ -211,6 +213,8 @@
     user-select: none;
     border-bottom: 1px solid #ddd;
     transition: background-color 0.2s ease;
+    position: relative; /* Create new stacking context */
+    z-index: 5; /* Lower than chat items but higher than general content */
 }
 
 .category-header:hover {
@@ -234,12 +238,14 @@
 /* Fixed category items container */
 .category-items {
     max-height: none; /* Remove max height limitation */
-    overflow: visible;
+    overflow: visible; /* Important - allow content to overflow for dropdowns */
     display: block; /* Important - ensures elements stack properly */
     width: 100%;
     transition: max-height 0.3s ease, opacity 0.3s ease;
     background-color: #f4f4f4;
     opacity: 1;
+    position: relative; /* Make this a positioning context */
+    z-index: 2; /* Above category */
 }
 
 .category-items.collapsed {
@@ -260,6 +266,7 @@
     transition: background-color 0.2s ease;
     background-color: #f9f9f9;
     margin: 0;
+    z-index: 10; /* Base z-index for chat items */
 }
 
 .chat-item:hover {
@@ -269,6 +276,11 @@
 .chat-item.selected {
     background-color: #e0e0e0;
     border-left: 3px solid #007bff;
+}
+
+/* Ensure dropdown stays on top when hovered */
+.chat-item:hover .dropdown {
+    z-index: 600;
 }
 
 /* Enhanced profile picture styles */
@@ -353,10 +365,11 @@
     text-overflow: ellipsis;
 }
 
-/* Dropdown styles */
+/* Dropdown styles - improved to ensure visibility */
 .dropdown {
     position: relative;
     margin-left: 5px;
+    z-index: 500; /* Significantly higher z-index to ensure visibility */
 }
 
 .dropdown-trigger {
@@ -365,6 +378,7 @@
     cursor: pointer;
     padding: 5px;
     color: #777;
+    transition: color 0.2s ease;
 }
 
 .dropdown-trigger:hover {
@@ -374,18 +388,25 @@
 .dropdown-menu {
     position: absolute;
     right: 0;
-    top: 100%;
+    top: calc(100% + 5px); /* Position slightly below to prevent accidental closing */
     background-color: white;
     border: 1px solid #ddd;
     border-radius: 4px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2); /* Stronger shadow for better visibility */
     display: none;
     min-width: 150px;
-    z-index: 10;
+    z-index: 999; /* Higher than dropdown button */
+    overflow: visible; /* Ensure content isn't clipped */
 }
 
 .dropdown-menu.active {
     display: block;
+    animation: fadeIn 0.15s ease-in; /* Smooth animation */
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .dropdown-item {
@@ -397,6 +418,7 @@
     background: none;
     cursor: pointer;
     font-size: 14px;
+    transition: background-color 0.2s;
 }
 
 .dropdown-item:hover {
